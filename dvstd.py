@@ -97,9 +97,7 @@ class DvStd(Peer):
 
         random.shuffle(requests)
 
-        requesters_id =[-1 for _ in range(len(requests))]
-        for i, request in enumerate(requests):
-            requesters_id[i] = request.requester_id
+        requesters_id = list(set([request.requester_id for request in requests]))
 
         received_from_peers = [0 for _ in range(len(requesters_id))]
 
@@ -122,12 +120,12 @@ class DvStd(Peer):
             # change my internal state for no reason
             #self.dummy_state["cake"] = "pie"
 
-            #if (round % 3 == 0) :
+            #if (round % 3 == 0) |  :
             self.dummy_state["optimistic"] = random.sample(requesters_id, 1)
 
             chosen = unchoke_peers
             chosen.append(self.dummy_state["optimistic"][0])
-            print(chosen)
+            #print(chosen)
 
             # Evenly "split" my upload bandwidth among the one chosen requester
             bws = even_split(self.up_bw, len(chosen))
