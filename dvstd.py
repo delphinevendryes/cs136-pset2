@@ -19,6 +19,8 @@ class DvStd(Peer):
         self.n_unchoke_slots = 4
         self.dummy_state = dict()
         #self.dummy_state["cake"] = "lie"
+        self.optimistic_set = []
+
     
     def requests(self, peers, history):
         """
@@ -118,7 +120,24 @@ class DvStd(Peer):
             bws = []
         else:
             chosen = unchoke_peers
-            chosen.append(random.sample(requesters_id, 1))
+            potential_optimistic = set(requesters_id) - set(chosen)
+            #potential_optimistic = set(requesters_id)
+
+            if((round % 3 == 0 or len(self.optimistic_set) == 0 ) and len(potential_optimistic)!= 0):
+                optimistic = random.sample(potential_optimistic, 1)
+                self.optimistic_set = optimistic
+                chosen.append(optimistic)
+            else:
+                # If we've optimistically unchoked someone who's already 
+                # in our upload list we choose to pick a new peer
+                opt = self.optimistic_set
+                if(opt not in chosen):
+                    chosen.append(self.optimistic_set)
+                else:
+                    optimistic = random.sample(potential_optimistic, 1)
+                    self.optimistic_set = optimistic
+                    chosen.append(optimistic)
+
 
             # Evenly "split" my upload bandwidth among the one chosen requester
             bws = even_split(self.up_bw, len(chosen))
