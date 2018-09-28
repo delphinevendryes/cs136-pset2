@@ -16,6 +16,8 @@ from peer import Peer
 class DvPropshare(Peer):
     def post_init(self):
         print "post_init(): %s here!" % self.id
+        self.optimistically_unchoked_peer = -1
+        self.first_upload_round = -1
         #self.dummy_state = dict()
         #self.n_unchoke_slots = 4
         #self.dummy_state["cake"] = "lie"
@@ -32,7 +34,6 @@ class DvPropshare(Peer):
         needed = lambda i: self.pieces[i] < self.conf.blocks_per_piece
         needed_pieces = filter(needed, range(len(self.pieces)))
         np_set = set(needed_pieces)  # sets support fast intersection ops.
-
 
         logging.debug("%s here: still need pieces %s" % (
             self.id, needed_pieces))
@@ -57,8 +58,9 @@ class DvPropshare(Peer):
 
         if len(needed_pieces) > 0:
             for p in peers:
-                for piece_id in p.available_pieces:
-                    if piece_id in needed_pieces:
+                av_set = set(p.available_pieces)
+                isect = av_set.intersection(np_set)
+                for piece_id in list(isect):
                         ind = needed_pieces.index(piece_id)
                         needed_pieces_pop[ind] += 1
                         needed_pieces_peer[ind].append(p)
@@ -68,10 +70,13 @@ class DvPropshare(Peer):
             needed_pieces_peer = [needed_pieces_peer[i] for i in pop_sort_index]
 
         num_request_to_peer = [0 for _ in range(len(peers))]
+
         for piece_id, piece_peers in zip(needed_pieces, needed_pieces_peer):
             peer_available = [piece_peers.index(p) for p in piece_peers if
                               num_request_to_peer[peers.index(p)] < self.max_requests]
+
             if len(peer_available) > 0:
+                #for peer in [piece_peers[i] for i in peer_available]:
                 peer = random.choice([piece_peers[i] for i in peer_available])
                 start_block = self.pieces[piece_id]
                 r = Request(self.id, peer.id, piece_id, start_block)
@@ -90,7 +95,6 @@ class DvPropshare(Peer):
 
         In each round, this will be called after requests().
         """
-
         round = history.current_round()
         logging.debug("%s again.  It's round %d." % (
             self.id, round))
@@ -99,46 +103,56 @@ class DvPropshare(Peer):
         # has a list of Download objects for each Download to this peer in
         # the previous round.
 
+        # Get list of unique requesters id
         requesters_id = list(set([request.requester_id for request in requests]))
 
+        # get total download to self and download from each requester to self
         peers_share = [0 for _ in range(len(requesters_id))]
         total_dws = 0
-
+        unchoke_peers = []
         if round > 1:
             for download in history.downloads[round - 1]:
-                total_dws += download.blocks
-                if (download.from_id in requesters_id) :#& (download.to_id == self.id): # count only dws to myself
+                if (download.from_id in requesters_id) : #& (download.to_id == self.id): # count only dws to myself
                     from_peer = requesters_id.index(download.from_id)
                     bw = download.blocks
                     peers_share[from_peer] += bw
+                    total_dws += bw
 
             if total_dws > 0:
                 peers_share = [peers_share[i] / total_dws for i in range(len(peers_share))]
-            #print(peers_share)
 
+            # sort requesters and shares on their share in previous round downloads
             share_sort_index = sorted(range(len(peers_share)), key=peers_share.__getitem__, reverse=True)
-            unchoke_peers = [requesters_id[i] for i in share_sort_index]
             peers_share = [peers_share[i] for i in share_sort_index]
-            unchoke_peers = [unchoke_peers[i] for i in range(len(peers_share)) if peers_share[i] > 0]
-        else:
-            unchoke_peers = []
+            requesters_id = [requesters_id[i] for i in share_sort_index]
+            # select requesters who participated in self downloads
+            unchoke_peers = [requesters_id[i] for i in range(len(peers_share)) if peers_share[i] > 0]
 
         chosen = []
         bws = []
 
+        # Assign bandwidth to requesters
+
         if len(requests) > 0:
+            if self.first_upload_round == -1:
+                self.first_upload_round = round
+
             sum_bws = 0
             i=0
             while (sum_bws < 0.9 * self.up_bw) & (i < len(unchoke_peers)):
                 chosen.extend([unchoke_peers[i]])
-                bws.extend([0.9 * peers_share[i]* self.up_bw])
+                bws.extend([0.9 * peers_share[i] * self.up_bw])
                 sum_bws += 0.9 * peers_share[i] * self.up_bw
                 i += 1
 
+            #if ((round - self.first_upload_round) % 3 == 0) & (round > self.first_upload_round - 1):
+            self.optimistically_unchoked_peer = random.sample(requesters_id, 1)
+
             # Optimistic unchoking for the rest of the bandwidth
-            chosen.extend(random.sample(requesters_id, 1))
-            bws.extend([self.up_bw-sum_bws])
-            #print(chosen)
+            chosen.extend(self.optimistically_unchoked_peer)
+            bws.extend([self.up_bw - sum_bws])
+
+            print(chosen, bws)
 
         # create actual uploads out of the list of peer ids and bandwidths
         uploads = [Upload(self.id, peer_id, bw)

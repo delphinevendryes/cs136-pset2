@@ -2,12 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="95854bab-42e5-4e3a-b755-e068a38f24eb" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/out.prof" afterPath="$PROJECT_DIR$/out.prof" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dummy.py" afterPath="$PROJECT_DIR$/dummy.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dvpropshare.py" afterPath="$PROJECT_DIR$/dvpropshare.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dvstd.py" afterPath="$PROJECT_DIR$/dvstd.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dvtourney.py" afterPath="$PROJECT_DIR$/dvtourney.py" />
     </list>
     <ignored path="code.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -30,8 +29,8 @@
       <file leaf-file-name="dummy.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/dummy.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="394">
-              <caret line="103" column="53" selection-start-line="103" selection-start-column="53" selection-end-line="103" selection-end-column="53" />
+            <state relative-caret-position="-311">
+              <caret line="57" column="47" selection-start-line="57" selection-start-column="12" selection-end-line="57" selection-end-column="47" />
               <folding />
             </state>
           </provider>
@@ -50,7 +49,7 @@
       <file leaf-file-name="messages.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/messages.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="705">
+            <state relative-caret-position="439">
               <caret line="47" column="0" selection-start-line="47" selection-start-column="0" selection-end-line="47" selection-end-column="0" />
               <folding />
             </state>
@@ -60,8 +59,8 @@
       <file leaf-file-name="dvstd.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/dvstd.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="469">
-              <caret line="126" column="60" selection-start-line="126" selection-start-column="60" selection-end-line="126" selection-end-column="60" />
+            <state relative-caret-position="394">
+              <caret line="123" column="12" selection-start-line="123" selection-start-column="12" selection-end-line="123" selection-end-column="53" />
               <folding>
                 <element signature="e#277#290#0" expanded="true" />
               </folding>
@@ -69,11 +68,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="dvpropshare.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="dvpropshare.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/dvpropshare.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="349">
-              <caret line="104" column="21" selection-start-line="104" selection-start-column="21" selection-end-line="104" selection-end-column="21" />
+            <state relative-caret-position="169">
+              <caret line="114" column="58" selection-start-line="114" selection-start-column="58" selection-end-line="114" selection-end-column="58" />
               <folding>
                 <element signature="e#277#290#0" expanded="true" />
               </folding>
@@ -101,12 +100,14 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="dvtourney.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="dvtourney.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dvtourney.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
+            <state relative-caret-position="439">
+              <caret line="128" column="66" selection-start-line="128" selection-start-column="66" selection-end-line="128" selection-end-column="66" />
+              <folding>
+                <element signature="e#276#289#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -141,9 +142,10 @@
       <list>
         <option value="$PROJECT_DIR$/sim.py" />
         <option value="$PROJECT_DIR$/messages.py" />
-        <option value="$PROJECT_DIR$/dvstd.py" />
         <option value="$PROJECT_DIR$/dummy.py" />
+        <option value="$PROJECT_DIR$/dvstd.py" />
         <option value="$PROJECT_DIR$/dvpropshare.py" />
+        <option value="$PROJECT_DIR$/dvtourney.py" />
       </list>
     </option>
   </component>
@@ -448,7 +450,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+          <folding>
+            <element signature="e#276#289#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -515,46 +519,48 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/dvtourney.py">
+    <entry file="file://$PROJECT_DIR$/dummy.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/messages.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="705">
-          <caret line="47" column="0" selection-start-line="47" selection-start-column="0" selection-end-line="47" selection-end-column="0" />
+        <state relative-caret-position="-311">
+          <caret line="57" column="47" selection-start-line="57" selection-start-column="12" selection-end-line="57" selection-end-column="47" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/dvstd.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="469">
-          <caret line="126" column="60" selection-start-line="126" selection-start-column="60" selection-end-line="126" selection-end-column="60" />
+        <state relative-caret-position="394">
+          <caret line="123" column="12" selection-start-line="123" selection-start-column="12" selection-end-line="123" selection-end-column="53" />
           <folding>
             <element signature="e#277#290#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/dummy.py">
+    <entry file="file://$PROJECT_DIR$/messages.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="394">
-          <caret line="103" column="53" selection-start-line="103" selection-start-column="53" selection-end-line="103" selection-end-column="53" />
+        <state relative-caret-position="439">
+          <caret line="47" column="0" selection-start-line="47" selection-start-column="0" selection-end-line="47" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/dvpropshare.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="349">
-          <caret line="104" column="21" selection-start-line="104" selection-start-column="21" selection-end-line="104" selection-end-column="21" />
+        <state relative-caret-position="169">
+          <caret line="114" column="58" selection-start-line="114" selection-start-column="58" selection-end-line="114" selection-end-column="58" />
           <folding>
             <element signature="e#277#290#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/dvtourney.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="439">
+          <caret line="128" column="66" selection-start-line="128" selection-start-column="66" selection-end-line="128" selection-end-column="66" />
+          <folding>
+            <element signature="e#276#289#0" expanded="true" />
           </folding>
         </state>
       </provider>
