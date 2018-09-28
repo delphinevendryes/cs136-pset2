@@ -35,6 +35,8 @@ class DvTourney(Peer):
         needed = lambda i: self.pieces[i] < self.conf.blocks_per_piece
         needed_pieces = filter(needed, range(len(self.pieces)))
         np_set = set(needed_pieces)  # sets support fast intersection ops.
+        
+
 
         logging.debug("%s here: still need pieces %s" % (
             self.id, needed_pieces))
@@ -51,8 +53,26 @@ class DvTourney(Peer):
         # Symmetry breaking is good...
         random.shuffle(needed_pieces)
 
-        # Explain why
+        # If we don't have enough pieces let's make it somewhat random 
+        # This way we don't get stuck at a weird place when no one 
+        # has actually downloaded anything
         random.shuffle(peers)
+        if(len(self.pieces) - len(np_set) < 2):
+            for peer in peers:
+                av_set = set(peer.available_pieces)
+                isect = av_set.intersection(np_set)
+                n = min(self.max_requests, len(isect))
+            # More symmetry breaking -- ask for random pieces.
+            # This would be the place to try fancier piece-requesting strategies
+            # to avoid getting the same thing from multiple peers at a time.
+                for piece_id in random.sample(isect, n):
+                # aha! The peer has this piece! Request it.
+                # which part of the piece do we need next?
+                # (must get the next-needed blocks in order)
+                    start_block = self.pieces[piece_id]
+                    r = Request(self.id, peer.id, piece_id, start_block)
+                    requests.append(r)
+            return requests
 
         needed_pieces_pop = [0 for _ in range(len(needed_pieces))]
         needed_pieces_peer = [[] for _ in range(len(needed_pieces))]
@@ -131,18 +151,37 @@ class DvTourney(Peer):
 
         chosen = []
         bws = []
+        
 
         # Assign bandwidth to requesters
         if len(requests) > 0:
             if self.first_upload_round == -1:
                 self.first_upload_round = round
-
             sum_bws = 0
             i = 0
+            
+            #These are the peers that have been giving us consistent downloads 
+            # this means there's a chance that they're continue to give us 
+            # even if we reduce ever so slightly and potetnailly get more peers
+            prior_ids = []
+            prior_downloads_sets = []
+            good_peers = set()
+            if(round > 3):
+                period_lookback = 3
+                for b in range(0, period_lookback ):    
+                    temp = history.downloads[history.last_round() - b]
+                    prior_ids = [x.from_id for x in temp]
+                    prior_downloads_sets.append(set(prior_ids))
+    
+            # Get the interesction to see who's given us a lot and maybe 
+            # if we can tone down the amount we send them
+                good_peers = set.union(*prior_downloads_sets)
+
             while (sum_bws < 0.9 * self.up_bw) & (i < len(unchoke_peers)):
-                chosen.extend([unchoke_peers[i]])
-                bws.extend([0.9 * peers_share[i] * self.up_bw])
-                sum_bws += 0.9 * peers_share[i] * self.up_bw
+                chosen.extend([unchoke_peers[i]])                
+                factor = 0.8 if unchoke_peers[i] in good_peers else 0.9
+                bws.extend([factor * peers_share[i] * self.up_bw])
+                sum_bws += factor* peers_share[i] * self.up_bw
                 i += 1
 
             # if ((round - self.first_upload_round) % 3 == 0) & (round > self.first_upload_round - 1):
