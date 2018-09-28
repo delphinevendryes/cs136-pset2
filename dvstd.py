@@ -12,23 +12,21 @@ import logging
 from messages import Upload, Request
 from util import even_split, argmax
 from peer import Peer
+from collections import Counter
 
 class DvStd(Peer):
     def post_init(self):
         print "post_init(): %s here!" % self.id
         self.n_unchoke_slots = 4
         self.dummy_state = dict()
-        #self.dummy_state["cake"] = "lie"
         self.optimistic_set = []
-
+        #self.dummy_state["cake"] = "lie"
     
     def requests(self, peers, history):
         """
         peers: available info about the peers (who has what pieces)
         history: what's happened so far as far as this peer can see
-
         returns: a list of Request() objects
-
         This will be called after update_pieces() with the most recent state.
         """
         needed = lambda i: self.pieces[i] < self.conf.blocks_per_piece
@@ -52,6 +50,7 @@ class DvStd(Peer):
 
         # Explain why
         random.shuffle(peers)
+        
 
         needed_pieces_pop = [0 for _ in range(len(needed_pieces))]
         needed_pieces_peer = [[] for _ in range(len(needed_pieces))]
@@ -91,56 +90,92 @@ class DvStd(Peer):
         In each round, this will be called after requests().
         """
 
-        round = history.current_round()
+        round_num = history.current_round()
+        logging.debug("%s again.  It's round %d." % (
+            self.id, round_num))
         # One could look at other stuff in the history too here.
         # For example, history.downloads[round-1] (if round != 0, of course)
         # has a list of Download objects for each Download to this peer in
         # the previous round.
-
-        random.shuffle(requests)
-
-        requesters_id = list(set([request.requester_id for request in requests]))
-
-        received_from_peers = [0 for _ in range(len(requesters_id))]
-
-        for i in range(1):
-            if round > i:
-                for download in history.downloads[round-i-1]:
-                    if (download.to_id == self.id) & (download.from_id in requesters_id):
-                        from_peer = requesters_id.index(download.from_id)
-                        bw = download.blocks
-                        received_from_peers[from_peer] += bw
-
-        # Choose 4 among those who ask!
-        share_sort_index = sorted(range(len(received_from_peers)), key=received_from_peers.__getitem__, reverse=True)
-        unchoke_peers = [requesters_id[i] for i in share_sort_index][:self.n_unchoke_slots -1]
+        
+        SLOT_NUMBER = 4
+        OPTOMISTIC_SLOT_NUMBER = 1
 
         if len(requests) == 0:
+            logging.debug("No one wants my pieces!")
             chosen = []
             bws = []
-        else:
-            chosen = unchoke_peers
-            potential_optimistic = set(requesters_id) - set(chosen)
-            #potential_optimistic = set(requesters_id)
+        elif round_num == 0:
+            logging.debug("Still here: uploading to a random peer")
+            # change my internal state for no reason
+            self.dummy_state["cake"] = "pie"
 
-            if((round % 3 == 0 or len(self.optimistic_set) == 0 ) and len(potential_optimistic)!= 0):
-                optimistic = random.sample(potential_optimistic, 1)
-                self.optimistic_set = optimistic
-                chosen.append(optimistic)
-            else:
-                # If we've optimistically unchoked someone who's already 
-                # in our upload list we choose to pick a new peer
-                opt = self.optimistic_set
-                if(opt not in chosen):
-                    chosen.append(self.optimistic_set)
-                else:
-                    optimistic = random.sample(potential_optimistic, 1)
-                    self.optimistic_set = optimistic
-                    chosen.append(optimistic)
-
-
+            request = random.choice(requests)
+            chosen = [request.requester_id]
             # Evenly "split" my upload bandwidth among the one chosen requester
             bws = even_split(self.up_bw, len(chosen))
+
+        else:
+            # Look at the prior round and determine how much we give
+            requester_ids = [request.requester_id for request in requests]
+            #Now grab information about their upload to you
+            prior_downloads = []
+            for i in range(0, 3):    
+                prior_downloads += history.downloads[history.last_round() - i]
+            
+            prior_senders_ids = [d.from_id for d in prior_downloads]
+            logging.debug("Prior downloands is " + str(prior_downloads))
+
+            prior_per_id = Counter()
+            for elem in prior_downloads:
+                prior_per_id[elem.from_id] += elem.blocks
+            requester_ids = set(requester_ids)
+
+            # Number of unique users/slots we'll use 
+            n = min(len(set(requester_ids)), SLOT_NUMBER)
+            logging.debug("Prior per id is " + str(prior_per_id))
+           # print("N is %d and max up bw is %d" % (n, self.up_bw) )
+            
+            # Here we want to calculate how many slots we'll use to give to
+            # users who've given us bandwidth. We cap it at SLOT NUMBER - OPTOMOISTC 
+            # as we want 1 optimisitc user. If the rquest length is smaller than we 
+            # by defintion give it to everyone. otherwise we give to 
+            # those who gave us stuff and who want stuff. The rest will go optomistically
+            downloaders_requesters = set(requester_ids).intersection(set(prior_senders_ids))
+            m = min(SLOT_NUMBER - OPTOMISTIC_SLOT_NUMBER, len(requester_ids), len(downloaders_requesters))
+            # Now take the counter and remove the intersection 
+            f1 = lambda x : x in downloaders_requesters
+            counter_filtered = Counter(filter(f1, prior_per_id))
+#            prior_downloads = sorted(prior_downloads, key = lambda x : x.blocks, reverse = True)
+              
+            # get the users who give us the most bandwidth in prior round
+            top_m = counter_filtered.most_common(m)
+            chosen = []
+            bws = []
+            if(len(top_m)):
+                chosen = [d[0] for d in top_m]
+                bws = [(self.up_bw/n) for d in xrange(len(top_m))]
+           # Now who'se left figure out how much to just choose randomly
+            
+            if(len(self.optimistic_set ) == 0 or round_num % 3 == 0):  
+                logging.debug("Checking random")
+                remaining_candidates = set(requester_ids) - set(chosen)
+                logging.debug("Candidates are" + str(remaining_candidates))
+                v = n - len(chosen)
+                logging.debug("v is %d" % v)
+                remaining = random.sample(remaining_candidates, n - len(chosen))
+                self.optimistic_set = remaining
+                bws += [(self.up_bw/n) for d in xrange(len(remaining))]
+                chosen += remaining
+            elif( len(self.optimistic_set)):
+                remaining = self.optimistic_set
+                bws += [(self.up_bw/n) for d in xrange(len(remaining))]
+                chosen += remaining
+            logging.debug("Optomistic is " + str(self.optimistic_set))
+            if(sum(bws) != self.up_bw): #Deal with rounding
+                to_even_split = even_split(self.up_bw - sum(bws), len(bws))
+                bws = [sum(x) for x in zip(bws, to_even_split)]
+            
 
         # create actual uploads out of the list of peer ids and bandwidths
         uploads = [Upload(self.id, peer_id, bw)
